@@ -13,12 +13,14 @@ import { useMemo, useEffect } from "react";
 
 const pc = new RTCPeerConnection({
   iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" },
     {
-      urls: "turn:openrelay.metered.ca:80",
-      username: "openrelayproject",
-      credential: "openrelayproject",
+      urls: [
+        "stun:stun1.l.google.com:19302",
+        "stun:stun2.l.google.com:19302",
+        "stun:stun.l.google.com:19302",
+        "stun:stun3.l.google.com:19302",
+        "stun:stun4.l.google.com:19302",
+      ],
     },
   ],
   iceCandidatePoolSize: 10,
@@ -83,6 +85,27 @@ export function Caller() {
   const { data: callId } = useCallStart(callDoc, Boolean(localStream));
 
   useEffect(() => {
+    pc.addEventListener("connectionstatechange", console.warn);
+    pc.addEventListener("iceconnectionstatechange", console.warn);
+    pc.addEventListener("icegatheringstatechange", console.warn);
+    pc.addEventListener("signalingstatechange", console.warn);
+    pc.addEventListener("negotiationneeded", console.warn);
+    pc.addEventListener("datachannel", console.warn);
+    pc.addEventListener("icecandidateerror", console.warn);
+    pc.addEventListener("", console.warn);
+
+    return () => {
+      pc.removeEventListener("connectionstatechange", console.warn);
+      pc.removeEventListener("iceconnectionstatechange", console.warn);
+      pc.removeEventListener("icegatheringstatechange", console.warn);
+      pc.removeEventListener("signalingstatechange", console.warn);
+      pc.removeEventListener("negotiationneeded", console.warn);
+      pc.removeEventListener("datachannel", console.warn);
+      pc.removeEventListener("icecandidateerror", console.warn);
+    };
+  }, []);
+
+  useEffect(() => {
     function onIceCandidate(event: RTCPeerConnectionIceEvent) {
       if (!event.candidate) {
         return;
@@ -123,6 +146,7 @@ export function Caller() {
   useEffect(() => {
     function onRemoteTrack(event: RTCTrackEvent) {
       event.streams[0].getTracks().forEach((track) => {
+        console.log(track);
         remoteStream.addTrack(track);
       });
     }
