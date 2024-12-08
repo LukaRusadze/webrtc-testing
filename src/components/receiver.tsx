@@ -145,28 +145,28 @@ function CallScreen({ code }: { code: string }) {
   }, [answerCandidates]);
 
   return (
-    <main className="flex min-h-screen w-full items-center justify-center gap-8 bg-gray-100 px-32">
-      <section className="flex-1">
+    <main className="flex min-h-screen w-full flex-col items-center justify-center bg-gray-100 px-4 md:flex-row md:gap-8 md:px-32">
+      <section className="w-full">
         <h1 className="text-2xl font-bold">Your Video</h1>
         {localStream ? (
-          <div className="relative aspect-video w-full overflow-hidden rounded-xl shadow">
+          <div className="relative aspect-square w-full overflow-hidden rounded-xl shadow md:aspect-video">
             <video
               autoPlay
               playsInline
               muted
-              className="absolute h-full w-full object-fill"
+              className="absolute h-full w-full object-cover"
               ref={(el) => el && (el.srcObject = localStream)}
             />
           </div>
         ) : null}
       </section>
-      <section className="flex-1">
+      <section className="w-full">
         <h1 className="text-2xl font-bold">Remote Video</h1>
-        <div className="relative aspect-video w-full overflow-hidden rounded-xl shadow">
+        <div className="relative aspect-square w-full overflow-hidden rounded-xl shadow md:aspect-video">
           <video
             autoPlay
             playsInline
-            className="absolute h-full w-full object-fill"
+            className="absolute h-full w-full object-cover"
             ref={(el) => el && (el.srcObject = remoteStream)}
           />
         </div>
