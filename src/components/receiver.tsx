@@ -166,7 +166,6 @@ function CallScreen({ code }: { code: string }) {
           <video
             autoPlay
             playsInline
-            muted
             className="absolute h-full w-full object-fill"
             ref={(el) => el && (el.srcObject = remoteStream)}
           />
