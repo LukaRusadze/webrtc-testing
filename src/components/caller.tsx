@@ -22,6 +22,11 @@ const pc = new RTCPeerConnection({
         "stun:stun4.l.google.com:19302",
       ],
     },
+    {
+      urls: "relay1.expressturn.com:3478",
+      username: "ef34TD0W09CBD8KFQU",
+      credential: "zVZalLG6s3Lr3V4I",
+    },
   ],
   iceCandidatePoolSize: 10,
 });
