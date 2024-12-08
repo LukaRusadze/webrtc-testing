@@ -10,20 +10,8 @@ import {
   updateDoc,
 } from "firebase/firestore";
 
-const pc = new RTCPeerConnection({
-  iceServers: [
-    {
-      urls: [
-        "stun:stun1.l.google.com:19302",
-        "stun:stun2.l.google.com:19302",
-        "stun:stun4.l.google.com:5349",
-      ],
-    },
-  ],
-  iceCandidatePoolSize: 10,
-});
-
 function onStartCallIceCandidate(event: RTCPeerConnectionIceEvent) {
+  console.log(event.candidate);
   if (!event.candidate) {
     return;
   }
@@ -37,6 +25,23 @@ function onStartCallIceCandidate(event: RTCPeerConnectionIceEvent) {
 export function Single() {
   const [localStream, setLocalStream] = useState(() => new MediaStream());
   const [remoteStream] = useState(() => new MediaStream());
+
+  const [pc] = useState(() => {
+    const pc = new RTCPeerConnection({
+      iceServers: [
+        {
+          urls: [
+            "stun:stun1.l.google.com:19302",
+            "stun:stun2.l.google.com:19302",
+            "stun:stun4.l.google.com:5349",
+          ],
+        },
+      ],
+      iceCandidatePoolSize: 10,
+    });
+
+    return pc;
+  });
 
   const [callId, setCallId] = useState("");
 

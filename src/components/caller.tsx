@@ -4,10 +4,12 @@ import {
   addDoc,
   collection,
   doc,
+  DocumentData,
+  DocumentReference,
   onSnapshot,
   setDoc,
 } from "firebase/firestore";
-import { useLayoutEffect } from "react";
+import { useMemo, useEffect } from "react";
 
 const pc = new RTCPeerConnection({
   iceServers: [
@@ -41,38 +43,15 @@ function useCamera() {
   });
 }
 
-async function onIceCandidate(event: RTCPeerConnectionIceEvent) {
-  if (!event.candidate) {
-    return;
-  }
-
-  const callDoc = doc(collection(firestore, "calls"));
-  const offerCandidates = collection(callDoc, "offerCandidates");
-
-  console.log("candidate", event.candidate.toJSON());
-
-  await new Promise((resolve) => setTimeout(resolve, 5000));
-
-  addDoc(offerCandidates, event.candidate.toJSON())
-    .then(console.warn)
-    .catch(console.error);
-}
-
-function onRemoteTrack(event: RTCTrackEvent) {
-  console.log("remote track", event);
-  event.streams[0].getTracks().forEach((track) => {
-    console.log("remote track", track);
-  });
-}
-
-function useCallStart(enabled: boolean) {
+function useCallStart(
+  callDoc: DocumentReference<DocumentData, DocumentData>,
+  enabled: boolean,
+) {
   return useQuery({
     queryKey: ["start-call"],
     refetchOnWindowFocus: false,
     enabled,
     queryFn: async () => {
-      const callDoc = doc(collection(firestore, "calls"));
-
       const offerDescription = await pc.createOffer();
       await pc.setLocalDescription(offerDescription);
 
@@ -89,17 +68,37 @@ function useCallStart(enabled: boolean) {
 }
 
 export function Caller() {
-  useLayoutEffect(() => {
-    pc.addEventListener("icecandidate", onIceCandidate);
+  const callDoc = useMemo(() => doc(collection(firestore, "calls")), []);
+  const offerCandidates = useMemo(
+    () => collection(callDoc, "offerCandidates"),
+    [callDoc],
+  );
+  const answerCandidates = useMemo(
+    () => collection(callDoc, "answerCandidates"),
+    [callDoc],
+  );
+  const remoteStream = useMemo(() => new MediaStream(), []);
+
+  const { data: localStream } = useCamera();
+  const { data: callId } = useCallStart(callDoc, Boolean(localStream));
+
+  useEffect(() => {
+    function onIceCandidate(event: RTCPeerConnectionIceEvent) {
+      if (!event.candidate) {
+        return;
+      }
+
+      addDoc(offerCandidates, event.candidate.toJSON());
+    }
+
+    pc.addEventListener("icecandidate", (event) => onIceCandidate(event));
 
     return () => {
-      pc.removeEventListener("icecandidate", onIceCandidate);
+      pc.removeEventListener("icecandidate", (event) => onIceCandidate(event));
     };
-  }, []);
+  }, [offerCandidates]);
 
-  useLayoutEffect(() => {
-    const callDoc = doc(collection(firestore, "calls"));
-
+  useEffect(() => {
     return onSnapshot(callDoc, (snapshot) => {
       const data = snapshot.data();
       if (!pc.currentRemoteDescription && data?.answer) {
@@ -108,12 +107,9 @@ export function Caller() {
         pc.setRemoteDescription(answerDescription);
       }
     });
-  }, []);
+  }, [callDoc]);
 
-  useLayoutEffect(() => {
-    const callDoc = doc(collection(firestore, "calls"));
-    const answerCandidates = collection(callDoc, "answerCandidates");
-
+  useEffect(() => {
     return onSnapshot(answerCandidates, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
         if (change.type === "added") {
@@ -122,34 +118,51 @@ export function Caller() {
         }
       });
     });
-  }, []);
+  }, [answerCandidates]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
+    function onRemoteTrack(event: RTCTrackEvent) {
+      event.streams[0].getTracks().forEach((track) => {
+        remoteStream.addTrack(track);
+      });
+    }
+
     pc.addEventListener("track", onRemoteTrack);
 
     return () => {
       pc.removeEventListener("track", onRemoteTrack);
     };
-  }, []);
-
-  const { data: localStream } = useCamera();
-  const { data: callId } = useCallStart(Boolean(localStream));
+  }, [remoteStream]);
 
   return (
-    <main className="flex bg-black w-full min-h-screen">
-      <section className="flex-1 h-full max-h-screen w-full overflow-hidden flex">
-        <video
-          className="flex-1 object-cover"
-          autoPlay
-          playsInline
-          muted
-          ref={(ref) => {
-            if (ref && localStream instanceof MediaStream) {
-              ref.srcObject = localStream;
-            }
-          }}
-        />
+    <main className="flex min-h-screen w-full items-center justify-center gap-8 bg-gray-100 px-32">
+      <section className="flex-1">
+        <h1 className="text-2xl font-bold">Your Video</h1>
+        {localStream ? (
+          <div className="relative aspect-video w-full overflow-hidden rounded-xl shadow">
+            <video
+              autoPlay
+              playsInline
+              muted
+              className="absolute h-full w-full object-fill"
+              ref={(el) => el && (el.srcObject = localStream)}
+            />
+          </div>
+        ) : null}
       </section>
+      <section className="flex-1">
+        <h1 className="text-2xl font-bold">Remote Video</h1>
+        <div className="relative aspect-video w-full overflow-hidden rounded-xl shadow">
+          <video
+            autoPlay
+            playsInline
+            muted
+            className="absolute h-full w-full object-fill"
+            ref={(el) => el && (el.srcObject = remoteStream)}
+          />
+        </div>
+      </section>
+
       <CallId callId={callId} />
     </main>
   );
@@ -161,7 +174,7 @@ function CallId(props: { callId?: string }) {
   }
 
   return (
-    <div className="bg-white px-4 py-2 rounded-xl absolute left-16 bottom-16">
+    <div className="absolute bottom-20 rounded-xl bg-white px-4 py-2 shadow">
       {props.callId}
     </div>
   );
