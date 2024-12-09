@@ -15,18 +15,12 @@ import { useQuery } from "@tanstack/react-query";
 const pc = new RTCPeerConnection({
   iceServers: [
     {
-      urls: [
-        "stun:stun1.l.google.com:19302",
-        "stun:stun2.l.google.com:19302",
-        "stun:stun.l.google.com:19302",
-        "stun:stun3.l.google.com:19302",
-        "stun:stun4.l.google.com:19302",
-      ],
+      urls: "stun:stun.kynoa.com",
     },
     {
-      urls: "turn:relay1.expressturn.com:3478",
-      username: "ef34TD0W09CBD8KFQU",
-      credential: "zVZalLG6s3Lr3V4I",
+      urls: "turn:turn.kynoa.com",
+      username: "kynoa-test",
+      credential: "idinaxui21",
     },
   ],
   iceCandidatePoolSize: 10,
@@ -161,7 +155,7 @@ function CallScreen({ code }: { code: string }) {
               autoPlay
               playsInline
               muted
-              className="absolute h-full w-full object-cover"
+              className="absolute h-full w-full scale-x-[-1] object-cover"
               ref={(el) => el && (el.srcObject = localStream)}
             />
           </div>
