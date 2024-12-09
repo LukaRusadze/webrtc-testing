@@ -19,8 +19,8 @@ const pc = new RTCPeerConnection({
     },
     {
       urls: "turn:turn.kynoa.com",
-      username: "kynoa-test",
-      credential: "idinaxui21",
+      credential:
+        "fdec760f1eb2c277ece220d4cfb53b7e7a10210f84ddca4e2a582fe0e6097616",
     },
   ],
   iceCandidatePoolSize: 10,
