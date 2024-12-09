@@ -14,10 +14,10 @@ import { useMemo, useEffect } from "react";
 const pc = new RTCPeerConnection({
   iceServers: [
     {
-      urls: "stun:stun.kynoa.com",
+      urls: "stun:stun.kynoa.tech",
     },
     {
-      urls: "turn:turn.kynoa.com",
+      urls: "turn:turn.kynoa.tech",
       username: "kynoa",
       credential: "idinaxui21",
     },
